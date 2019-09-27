@@ -3,7 +3,6 @@
 import argparse
 import requests
 import json
-import pprint
 
 def get_check_by_name(name):
     reqcheck = requests.get("https://api.pingdom.com/api/3.1/checks", 
