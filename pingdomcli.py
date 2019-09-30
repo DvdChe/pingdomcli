@@ -3,6 +3,7 @@
 import argparse
 import requests
 import json
+import pprint
 
 # -----------------------------------------------------------------------------
 
@@ -25,8 +26,12 @@ def get_check_by_name(auth, name):
             if check["name"] == name:
                 return check
     
-    else : return obj["checks"]
     
+    else : 
+        
+        obj_out = json.dumps(obj)
+        return obj_out
+        
     return None
 
 # -----------------------------------------------------------------------------
@@ -93,6 +98,8 @@ def delete_check(auth, checkid):
 
 def args2json(args):
     
+    tags = args.tags.split(",")
+
     json_check = {
         "name" : args.name,
         "host" : args.fqdn,
@@ -136,6 +143,8 @@ def del_check(args):
 
     else:
         delete_check(args.auth, check['id']) 
+
+# -----------------------------------------------------------------------------
 
 def get_check(args):
 
