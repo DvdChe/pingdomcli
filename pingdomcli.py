@@ -19,9 +19,14 @@ def get_check_by_name(auth, name):
 
     obj = json.loads(reqcheck.text)
 
-    for check in obj["checks"]:
-        if check["name"] == name:
-            return check
+    if (name != 'all'): 
+
+        for check in obj["checks"]:
+            if check["name"] == name:
+                return check
+    
+    else : return obj["checks"]
+    
     return None
 
 # -----------------------------------------------------------------------------
@@ -133,7 +138,8 @@ def del_check(args):
         delete_check(args.auth, check['id']) 
 
 def get_check(args):
-    return get_check_by_name(args.auth, args.name)
+
+    print(get_check_by_name(args.auth, args.name))
 
 # Main
 # -----------------------------------------------------------------------------
@@ -160,7 +166,7 @@ def main ():
     parser_get.set_defaults(func=get_check)
 
     parser_get.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
-    parser_get.add_argument("-n", "--name", required=True, help="Name of the check")
+    parser_get.add_argument("-n", "--name", default="all", help="Name of the check")
 
     args = parser.parse_args()
     args.func(args)
