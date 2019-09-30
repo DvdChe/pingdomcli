@@ -97,7 +97,7 @@ def args2json(args):
 
     return json_check
 
-# CLI Args function mapping :
+# CLI Args mapping functions:
 # -----------------------------------------------------------------------------
 
 def set_check(args):
@@ -132,6 +132,9 @@ def del_check(args):
     else:
         delete_check(args.auth, check['id']) 
 
+def get_check(args):
+    return get_check_by_name(args.auth, args.name)
+
 # Main
 # -----------------------------------------------------------------------------
 
@@ -153,9 +156,14 @@ def main ():
     parser_del.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
     parser_del.add_argument("-n", "--name", required=True, help="Name of the check")
 
+    parser_get = subparser.add_parser('get', help='get check')
+    parser_get.set_defaults(func=get_check)
+
+    parser_get.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
+    parser_get.add_argument("-n", "--name", required=True, help="Name of the check")
+
     args = parser.parse_args()
     args.func(args)
-
 
 if __name__ == '__main__':
     main()
