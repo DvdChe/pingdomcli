@@ -4,10 +4,12 @@ import argparse
 import requests
 import json
 
-def get_check_by_name(name):
+# -----------------------------------------------------------------------------
+
+def get_check_by_name(auth, name):
     reqcheck = requests.get("https://api.pingdom.com/api/3.1/checks", 
         headers = {
-            'Authorization': args['auth']
+            'Authorization': auth
         }
     )
 
@@ -18,9 +20,11 @@ def get_check_by_name(name):
     obj = json.loads(reqcheck.text)
 
     for check in obj["checks"]:
-        if check["name"] == args["name"]:
+        if check["name"] == name:
             return check
     return None
+
+# -----------------------------------------------------------------------------
 
 def create_check(auth, json_check):
    
@@ -40,6 +44,8 @@ def create_check(auth, json_check):
         print("Check has been created.")
         exit(0)
     raise Exception('Unexpected error, Return code to create check is :{}'.format(reqcreate.status_code))
+
+# -----------------------------------------------------------------------------
 
 def update_check(auth, checkid, json_check):
 
@@ -62,6 +68,8 @@ def update_check(auth, checkid, json_check):
 
     raise Exception('Unexpected error, Return code to update check is :{}'.format(requpdate.status_code))
 
+# -----------------------------------------------------------------------------
+
 def delete_check(auth, checkid):
     
     headers = {
@@ -76,45 +84,78 @@ def delete_check(auth, checkid):
     if reqdelete.status_code == 200:
         print("Check has been deleted")
 
+# -----------------------------------------------------------------------------
+
 def args2json(args):
     
     json_check = {
-        "name" : args['name'],
-        "host" : args['fqdn'],
+        "name" : args.name,
+        "host" : args.fqdn,
         "type" : "http",
         "encryption" : "true"
     }
 
     return json_check
 
-ap = argparse.ArgumentParser()
+# CLI Args function mapping :
+# -----------------------------------------------------------------------------
 
-ap.add_argument("-n", "--name", required=True, help="Name of the check")
-ap.add_argument("-f", "--fqdn", required=True, help="FQDN to check")
-ap.add_argument("-a", "--auth", required=True, help="Auth for API")
-ap.add_argument("-r", "--resolution", default=5, help="Resolution of check (default = 5)")
-ap.add_argument("-d","--delete", action='store_true', help="If present, delete the check (target by name)" )
+def set_check(args):
+    # Verify if check already exists
 
-args = vars(ap.parse_args())
+    check = get_check_by_name(args.auth, args.name)
+    json_check = args2json(args)
 
-json_check = args2json(args)
-
-# Verify if check already exists
-check = get_check_by_name(args['name'])
-if check == None and not(args['delete']):
+    if check == None:
     
-    # It doesn't then let's create it
-    create_check(args['auth'], json_check)
+        # It doesn't then let's create it
+        create_check(args.auth, json_check)
 
-elif check != None:
+    elif check != None:
 
-    if args['delete']:
-        delete_check(args['auth'], check['id'])
+        if check['hostname'] != args.fqdn:
+          update_check(args.auth, check['id'], json_check)
 
-    elif check['hostname'] != args['fqdn']:
-        update_check(args['auth'], check['id'], json_check)
+        else:
+            print('Check already exists ({}) and no update is needed '.format(check['id']))
+
+    return True
+
+# -----------------------------------------------------------------------------
+
+def del_check(args):
+    check = get_check_by_name(args.auth, args.name)
+    
+    if check == None:
+        print("No existent check with name "+args.name+". Nothing to delete")
 
     else:
-        print('Check already exists ({}) and no update is needed '.format(check['id']))
+        delete_check(args.auth, check['id']) 
 
-exit()
+# Main
+# -----------------------------------------------------------------------------
+
+def main ():
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers(help='sub-command help')
+
+    parser_set = subparser.add_parser('set', help='create or update a check')
+    parser_set.set_defaults(func=set_check)
+
+    parser_set.add_argument("-n", "--name", required=True, help="Name of the check", dest='name')
+    parser_set.add_argument("-f", "--fqdn", required=True, help="FQDN to check", dest='fqdn')
+    parser_set.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
+    parser_set.add_argument("-r", "--resolution", default=5, help="Resolution of check (default = 5)", dest='resolution')
+
+    parser_del = subparser.add_parser('delete', help='delete a check')
+    parser_del.set_defaults(func=del_check)
+
+    parser_del.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
+    parser_del.add_argument("-n", "--name", required=True, help="Name of the check")
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()
