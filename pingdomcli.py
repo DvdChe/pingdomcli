@@ -98,8 +98,6 @@ def delete_check(auth, checkid):
 
 def args2json(args):
     
-    tags = args.tags.split(",")
-
     json_check = {
         "name" : args.name,
         "host" : args.fqdn,
