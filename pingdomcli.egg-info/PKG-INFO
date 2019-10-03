@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: pingdomcli
+Version: 0.0.1
+Summary: A cli tool to manage checks on Pingdom
+Home-page: https://github.com/DvdChe/pingdomcli
+Author: David Cherriere
+Author-email: cherri.david@gmail.com
+License: UNKNOWN
+Description: This tool is still in development. It's designed to be lightweight and to use standard libs
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown

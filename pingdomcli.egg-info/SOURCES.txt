@@ -1,0 +1,7 @@
+README.md
+setup.py
+pingdomcli.egg-info/PKG-INFO
+pingdomcli.egg-info/SOURCES.txt
+pingdomcli.egg-info/dependency_links.txt
+pingdomcli.egg-info/top_level.txt
+pingdomcli_pkg/__init__.py
