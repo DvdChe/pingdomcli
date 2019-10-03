@@ -3,7 +3,6 @@
 import argparse
 import requests
 import json
-import pprint
 
 # -----------------------------------------------------------------------------
 
@@ -129,8 +128,6 @@ def set_check(args):
         else:
             print('Check already exists ({}) and no update is needed '.format(check['id']))
 
-    return True
-
 # -----------------------------------------------------------------------------
 
 def del_check(args):
@@ -176,7 +173,12 @@ def main ():
     parser_get.add_argument("-n", "--name", default="all", help="Name of the check")
 
     args = parser.parse_args()
-    args.func(args)
+    
+    if hasattr(args, 'func'):
+        args.func(args)
 
+    else:
+        print("No subcommand found. please, use "+__file__+" --help for more infromation")
+    
 if __name__ == '__main__':
     main()
