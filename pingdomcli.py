@@ -9,7 +9,7 @@ import json
 def get_check_by_name(auth, name):
     reqcheck = requests.get("https://api.pingdom.com/api/3.1/checks", 
         headers = {
-            'Authorization': auth
+            'Authorization': 'Bearer ' + auth
         }
     )
 
@@ -38,7 +38,7 @@ def get_check_by_name(auth, name):
 def create_check(auth, json_check):
    
     headers = {
-        'Authorization' : auth,
+        'Authorization' : 'Bearer ' + auth,
         'Content-type': 'application/json',
         'Accept': 'text/plain'
     }
@@ -61,7 +61,7 @@ def update_check(auth, checkid, json_check):
     json_check.pop("type")
 
     headers = {
-        'Authorization' : auth,
+        'Authorization' : 'Bearer ' + auth,
         'Content-type': 'application/json'
     }
 
@@ -82,7 +82,7 @@ def update_check(auth, checkid, json_check):
 def delete_check(auth, checkid):
     
     headers = {
-        'Authorization' : auth
+        'Authorization' : 'Bearer ' + auth
     }
 
     reqdelete = requests.delete(
