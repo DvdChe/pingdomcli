@@ -3,6 +3,7 @@
 import argparse
 import requests
 import json
+import datetime
 
 # -----------------------------------------------------------------------------
 
@@ -23,15 +24,69 @@ def get_check_by_name(auth, name):
 
         for check in obj["checks"]:
             if check["name"] == name:
-                return check
-    
+                check_out = json.dumps(check, indent=4)
+                return check_out
     
     else : 
         
-        obj_out = json.dumps(obj)
+        obj_out = json.dumps(obj, indent=4)
         return obj_out
         
     return None
+
+
+# -----------------------------------------------------------------------------
+
+def get_teams_by_name(auth, name, idt):
+    reqteams = requests.get("https://api.pingdom.com/api/3.1/alerting/teams",
+        headers = {
+            'Authorization': 'Bearer ' + auth
+        }
+    )
+
+    if reqteams.status_code != 200:
+        raise Exception('Request check failed. Response code is :{}'.format(reqteams.status_code))
+        return False
+
+    obj = json.loads(reqteams.text)
+
+    if (name != 'all'):
+
+        for team in obj["teams"]:
+            if team["name"] == name:
+                team_out = json.dumps(team, indent=4)
+                return team_out
+    
+    elif (idt == "True"):
+
+        for idtms in obj["teams"]:
+            idtms_out = []
+            idtms_out.append(idtms['id'])
+            print(idtms_out)
+    else :
+
+        obj_out = json.dumps(obj, indent=4)
+        return obj_out
+
+    return None
+
+# -----------------------------------------------------------------------------
+
+def get_maintenances(auth):
+    reqmnt = requests.get("https://api.pingdom.com/api/3.1/maintenance",
+        headers = {
+            'Authorization' : 'Bearer ' + auth
+        }
+    )
+    
+    if reqmnt.status_code != 200:
+        raise Exception('Request check failed. Response code is :{}'.format(reqmnt.status_code))
+        return False
+
+    obj = json.loads(reqmnt.text)
+    obj_out = json.dumps(obj, indent=4)
+
+    return obj_out
 
 # -----------------------------------------------------------------------------
 
@@ -74,7 +129,7 @@ def update_check(auth, checkid, json_check):
     if requpdate.status_code == 200:
         print("Check has been updated.")
         exit(0)
-
+    print(requpdate)
     raise Exception('Unexpected error, Return code to update check is :{}'.format(requpdate.status_code))
 
 # -----------------------------------------------------------------------------
@@ -101,6 +156,9 @@ def args2json(args):
         "name" : args.name,
         "host" : args.fqdn,
         "type" : "http",
+        "verify_certificate" : args.verify_certificate,
+        "tags" : args.tags,
+        "probe_filters" : "region: EU",
         "encryption" : "true"
     }
 
@@ -122,28 +180,40 @@ def set_check(args):
 
     elif check != None:
 
-        if check['hostname'] != args.fqdn:
-          update_check(args.auth, check['id'], json_check)
+        checkout_json = json.loads(check)
+
+        if checkout_json['hostname'] != args.fqdn:
+            update_check(args.auth, checkout_json['id'], json_check)
 
         else:
-            print('Check already exists ({}) and no update is needed '.format(check['id']))
+            print('Check already exists ({}) and no update is needed '.format(checkout_json['id']))
 
 # -----------------------------------------------------------------------------
 
 def del_check(args):
     check = get_check_by_name(args.auth, args.name)
+    checkout_json = json.loads(check)
     
     if check == None:
         print("No existent check with name "+args.name+". Nothing to delete")
 
     else:
-        delete_check(args.auth, check['id']) 
+        delete_check(args.auth, checkout_json['id']) 
 
 # -----------------------------------------------------------------------------
 
 def get_check(args):
 
     print(get_check_by_name(args.auth, args.name))
+
+def get_teams(args):
+
+    print(get_teams_by_name(args.auth, args.name, args.idt))
+
+def get_maintenance(args):
+
+    print(get_maintenances(args.auth))
+
 
 # Main
 # -----------------------------------------------------------------------------
@@ -159,6 +229,8 @@ def main ():
     parser_set.add_argument("-f", "--fqdn", required=True, help="FQDN to check", dest='fqdn')
     parser_set.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
     parser_set.add_argument("-r", "--resolution", default=5, help="Resolution of check (default = 5)", dest='resolution')
+    parser_set.add_argument("-v", "--verify_certificate", default=True, help="Enable SSL certificate verification (default = True (yes))", dest='verify_certificate')
+    parser_set.add_argument("-t", "--tags", required=True, help="Tags that must be set : env(prod, preprod, etc..), app(hybris, wp, etc...), site(intersport or rent)") 
 
     parser_del = subparser.add_parser('delete', help='delete a check')
     parser_del.set_defaults(func=del_check)
@@ -171,6 +243,16 @@ def main ():
 
     parser_get.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
     parser_get.add_argument("-n", "--name", default="all", help="Name of the check")
+
+    parser_teams = subparser.add_parser('teams', help="get teams")
+    parser_teams.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
+    parser_teams.add_argument("-n", "--name", default="all", help="Name of the teams", dest='name')
+    parser_teams.add_argument("-i", "--id", default=False, help="ID of the teams - None is nothing at the end of the list, ignore it!", dest='idt')
+    parser_teams.set_defaults(func=get_teams)
+
+    parser_mnt = subparser.add_parser('maintenance', help="get maintenance windows")
+    parser_mnt.add_argument("-a", "--auth", required=True, help="Auth for API", dest='auth')
+    parser_mnt.set_defaults(func=get_maintenance)
 
     args = parser.parse_args()
     
